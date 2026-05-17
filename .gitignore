@@ -1,0 +1,65 @@
+# ─────────── Secrets — NEVER commit ───────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials.json
+client_secret*.json
+oauth*.json
+google_oauth*.json
+google_client_secret*.json
+*.token
+*.jwt
+service_account*.json
+~/.jobseeker/
+
+# ─────────── Personal data ───────────
+profiles/*/resumes/*.docx
+profiles/*/resumes/*.pdf
+profiles/*/resumes/*.doc
+*.bak
+
+# ─────────── Local artifacts ───────────
+/tmp/jobseeker_*/
+.jobseeker/
+seen.db*
+docs/*.pdf
+
+# ─────────── Python ───────────
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# ─────────── Go ───────────
+services/go-scraper/go-scraper
+*.test
+
+# ─────────── Temp / build artifacts ───────────
+.tmp/
+*.log
+.DS_Store
+
+# ─────────── Docker ───────────
+.docker/
+
+# ─────────── IDE ───────────
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ─────────── OS ───────────
+Thumbs.db
+desktop.ini
