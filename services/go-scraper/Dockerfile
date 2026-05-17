@@ -8,6 +8,10 @@ RUN go mod download
 
 # Build
 COPY . .
+# go mod tidy ensures go.sum has every transitive dep — protects against
+# the local go.sum being incomplete (which can happen when `go mod tidy`
+# is run on a network-restricted machine and silently fails).
+RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /go-scraper .
 
 # ─── Runtime image ─────────────────────────────────────────────────────────────
