@@ -1,0 +1,13 @@
+name: Google
+ats: custom
+board_id: google
+active: true
+visa_transfers_h1b: true
+sponsors_new_h1b: true
+keywords_include: [devops, platform, sre, infrastructure, reliability, cloud, kubernetes]
+keywords_exclude: [intern, director, vp]
+custom:
+  scraper_module: connectors.custom.google_careers
+  params:
+    location: "United States"
+    query: "site reliability engineer"

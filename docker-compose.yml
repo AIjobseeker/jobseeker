@@ -1,0 +1,309 @@
+services:
+  # ─────────────────── Infrastructure ───────────────────
+  # Default profile = streaming pipeline only. Heavy infra (postgres, redis,
+  # minio, temporal) is gated behind --profile heavy so a fresh
+  # `docker compose up` boots only the 4 things needed for Telegram + Sheets.
+
+  nats:
+    image: nats:2.10-alpine
+    command: ["-js", "-sd", "/data"]
+    volumes:
+      - natsdata:/data
+    ports:
+      - "4222:4222"   # client connections
+      - "8222:8222"   # HTTP monitoring
+    healthcheck:
+      test: ["CMD", "nats-server", "--help"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    profiles: ["heavy"]
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: jobseeker
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-jobseeker123}
+      POSTGRES_DB: jobseeker
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobseeker -d jobseeker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
+  redis:
+    profiles: ["heavy"]
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    ports:
+      - "6379:6379"
+
+  minio:
+    profiles: ["heavy"]
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin123}
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "9000:9000"
+      - "9001:9001"  # MinIO web console
+
+  temporal:
+    profiles: ["heavy"]
+    image: temporalio/auto-setup:1.24.2
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=jobseeker
+      - POSTGRES_PWD=${POSTGRES_PASSWORD:-jobseeker123}
+      - POSTGRES_SEEDS=postgres
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    volumes:
+      - ./temporal-config:/etc/temporal/config/dynamicconfig
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "7233:7233"
+
+  temporal-ui:
+    profiles: ["heavy"]
+    image: temporalio/ui:2.26.2
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:8080
+    depends_on:
+      - temporal
+    ports:
+      - "8080:8080"  # Browse to http://localhost:8080 to see all workflows
+
+
+  # ─────────────────── Application Services ───────────────────
+  # Streaming pipeline (active by default):
+  #   go-scraper -> nats jobs.raw -> scorer -> nats jobs.scored ->
+  #   notifier (dedup + sheet + telegram + bot listener)
+  #
+  # Heavy pipeline (Temporal — needs Ollama reachable):
+  #   worker registers activities (match/resume/cover/study/sheets sync)
+  #   triggered by ScrapeAllCompaniesWorkflow on the */15min cron schedule.
+  #   Disabled by default; bring up with `--profile heavy`.
+
+  go-scraper:
+    build:
+      context: ./services/go-scraper
+      dockerfile: Dockerfile
+    env_file: .env
+    command: ["--mode", "nats", "--seed", "/app/companies/seed_500.yaml"]
+    environment:
+      - ENV=production
+      - NATS_URL=nats://nats:4222
+    volumes:
+      - ./companies:/app/companies:ro
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Per-person scorer + notifier instances.
+  # Both subscribe to jobs.raw (the shared firehose from go-scraper +
+  # html-scraper); each scorer publishes to a person-specific subject
+  # (jobs.scored.sai / jobs.scored.gf). Each notifier owns its own bot,
+  # chat ID, sheet, and SQLite dedup db so the two pipelines never mix.
+
+  scorer-sai:
+    build:
+      context: .
+      dockerfile: services/scorer/Dockerfile
+    env_file: .env
+    environment:
+      - NATS_URL=nats://nats:4222
+      - PROFILE_PATH=/app/profiles/sai/profile.parsed.yaml
+      - SCORER_SUBJECT_RAW=jobs.raw
+      - SCORER_SUBJECT_SCORED=jobs.scored.sai
+      - SCORER_BATCH_SIZE=32
+      - SCORER_BATCH_FLUSH_SECONDS=1.0
+      - SCORER_QUEUE_GROUP=scorer-sai
+    volumes:
+      - ./profiles:/app/profiles:ro
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options: { max-size: "10m", max-file: "3" }
+
+  scorer-gf:
+    build:
+      context: .
+      dockerfile: services/scorer/Dockerfile
+    env_file: .env
+    environment:
+      - NATS_URL=nats://nats:4222
+      - PROFILE_PATH=/app/profiles/gf/profile.parsed.yaml
+      - SCORER_SUBJECT_RAW=jobs.raw
+      - SCORER_SUBJECT_SCORED=jobs.scored.gf
+      - SCORER_BATCH_SIZE=32
+      - SCORER_BATCH_FLUSH_SECONDS=1.0
+      - SCORER_QUEUE_GROUP=scorer-gf
+    volumes:
+      - ./profiles:/app/profiles:ro
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options: { max-size: "10m", max-file: "3" }
+
+  notifier-sai:
+    build:
+      context: .
+      dockerfile: services/notifier/Dockerfile
+    env_file: .env
+    environment:
+      - NATS_URL=nats://nats:4222
+      - JOBSEEKER_DB_PATH=/data/seen_sai.db
+      - SCORED_SUBJECT=jobs.scored.sai
+      - NEW_SUBJECT=jobs.new.sai
+      - NOTIFIER_PERSON=sai
+      - NOTIFIER_SHEET_PERSON=sai
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN_SAI}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID_SAI}
+      - TELEGRAM_MIN_SCORE=${TELEGRAM_MIN_SCORE_SAI:-0.65}
+    volumes:
+      - notifier-sai-data:/data
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options: { max-size: "10m", max-file: "3" }
+
+  notifier-gf:
+    build:
+      context: .
+      dockerfile: services/notifier/Dockerfile
+    env_file: .env
+    environment:
+      - NATS_URL=nats://nats:4222
+      - JOBSEEKER_DB_PATH=/data/seen_gf.db
+      - SCORED_SUBJECT=jobs.scored.gf
+      - NEW_SUBJECT=jobs.new.gf
+      - NOTIFIER_PERSON=gf
+      - NOTIFIER_SHEET_PERSON=gf
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN_GF}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID_GF}
+      - TELEGRAM_MIN_SCORE=${TELEGRAM_MIN_SCORE_GF:-0.55}
+    volumes:
+      - notifier-gf-data:/data
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options: { max-size: "10m", max-file: "3" }
+
+  html-scraper:
+    build:
+      context: .
+      dockerfile: services/html_scraper/Dockerfile
+    env_file: .env
+    environment:
+      - NATS_URL=nats://nats:4222
+      - SEED_PATH=/app/companies/seed_500.yaml
+      - HTML_TARGETS_PATH=/app/companies/html_targets.yaml
+      - HTML_SCRAPER_CONCURRENCY=3
+      - HTML_SCRAPER_INTERVAL=1800
+    volumes:
+      - ./companies:/app/companies:ro
+    depends_on:
+      nats:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Temporal worker — handles match/resume/cover/study via Ollama.
+  # Disabled by default (needs reachable Ollama). Bring up with:
+  #   docker compose --profile heavy up -d
+  worker:
+    profiles: ["heavy"]
+    build:
+      context: .
+      dockerfile: services/worker/Dockerfile
+    env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - POSTGRES_URL=postgresql://jobseeker:${POSTGRES_PASSWORD:-jobseeker123}@postgres:5432/jobseeker
+      - MINIO_ENDPOINT=minio:9000
+      - TEMPORAL_HOST=temporal:7233
+      # Ollama runs on user's Windows PC over Tailscale. Containers reach it
+      # because Docker Desktop on macOS NATs out to the host's network.
+      # Override OLLAMA_HOST in .env if Ollama is elsewhere.
+    volumes:
+      - ./profiles:/app/profiles
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+    restart: unless-stopped
+
+  # Legacy services kept for reference (not started by default).
+  api:
+    profiles: ["legacy"]
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    env_file: .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      temporal:
+        condition: service_started
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  miniodata:
+  natsdata:
+  notifier-sai-data:
+  notifier-gf-data:

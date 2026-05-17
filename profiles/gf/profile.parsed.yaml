@@ -1,0 +1,138 @@
+person:
+  name: Pooja Tanneru
+  email: tannerupooja01@gmail.com
+  phone: "+1-425-393-8144"
+  location: Chicago, IL
+  linkedin: https://www.linkedin.com/in/pooja-tanneru-87473b262/
+  current_title: AI/ML Engineer (new grad)
+  years_total_experience: 1
+  visa_status: f1_opt
+
+seniority:
+  level: entry            # entry / junior / mid / senior / staff
+  ic_or_manager: ic
+  next_step_titles:
+    - AI/ML Engineer
+    - Software Engineer (new grad / L3 / L4)
+    - Junior Data Scientist
+    - NLP Engineer
+    - ML Research Engineer
+    - Data Engineer (entry)
+
+# Skills the resume actually backs up — used for keyword matching & scoring.
+core_skills:
+  - python
+  - tensorflow
+  - pytorch
+  - scikit-learn
+  - keras
+  - hugging face
+  - transformers
+  - librosa
+  - cnn
+  - rnn
+  - deep learning
+  - nlp
+  - machine learning
+
+adjacent_skills:
+  - java
+  - go
+  - sql
+  - mysql
+  - mongodb
+  - aws
+  - docker
+  - jenkins
+  - ci/cd
+  - power bi
+  - tableau
+  - pandas
+  - numpy
+  - matplotlib
+  - react
+  - javascript
+  - node.js
+  - rest api
+  - linux
+  - git
+  - etl
+
+domains:
+  - {name: applied AI / NLP, years: 1, role: Research Intern + TA}
+  - {name: deep learning, years: 1, role: IEEE-published spoken-language identification}
+  - {name: data analytics, years: 1, role: Power BI churn analysis}
+
+career_arc: ic_track       # entry-level IC; not pursuing management
+
+# Title patterns to match against. Includes both ML/AI and SWE entry-level
+# because lots of new-grad SWE roles pay similarly and she has the chops.
+target_titles:
+  - ai engineer
+  - ml engineer
+  - machine learning engineer
+  - nlp engineer
+  - data scientist
+  - junior data scientist
+  - data engineer
+  - software engineer
+  - software engineer i
+  - software engineer ii
+  - software engineer l3
+  - software engineer l4
+  - associate software engineer
+  - new grad software engineer
+  - early career software engineer
+  - graduate software engineer
+  - junior software engineer
+  - ai research engineer
+  - applied scientist
+  - applied ml engineer
+
+# Hard rejects. Anything in title that says she's not the target.
+red_flags:
+  - senior
+  - staff
+  - principal
+  - lead
+  - manager
+  - director
+  - vp
+  - head of
+  - architect
+  - "iv "
+  - "v "
+  - 5+ years
+  - 8+ years
+  - 10+ years
+  - 7+ years
+
+# Boost score when JD mentions any of these.
+preferred_signals:
+  - new grad
+  - new graduate
+  - early career
+  - opt
+  - cpt
+  - sponsorship available
+  - visa sponsorship
+  - h1b sponsorship
+  - sponsors visas
+  - master's
+  - masters degree
+  - mentorship
+  - graduate program
+  - rotational
+  - junior
+  - entry level
+  - 0-2 years
+  - 1-2 years
+
+profile_summary: >
+  AI/ML Engineer with a Master's in Computer Science (GPA 3.9, May 2025) and
+  an IEEE-published deep learning paper on spoken-language identification
+  (93%+ accuracy across 10 languages). Hands-on experience with TensorFlow,
+  PyTorch, transformers, Hugging Face, and audio/CNN classification through
+  research, teaching-assistant work, and applied projects (Power BI churn
+  analytics, audio deep learning). Seeking entry-level roles in AI/ML, NLP,
+  data, or general software engineering.

@@ -1,0 +1,282 @@
+person:
+  name: Pooja Tanneru
+  email: tannerupooja01@gmail.com
+  phone: "+1 (425) 393-8144"
+  location: Chicago, IL
+  linkedin: https://www.linkedin.com/in/pooja-tanneru-87473b262/
+
+summary: |
+  AI/ML Engineer with a Master's in Computer Science (GPA 3.9, honors,
+  May 2025) and an IEEE-published deep-learning paper on spoken-language
+  identification + translation (93%+ accuracy across 10 languages, RNN/CNN
+  with attention mechanisms). Hands-on with TensorFlow, PyTorch, the
+  Hugging Face Transformers library, Librosa-based audio pipelines, and
+  applied LLM-alignment research deployed to web platforms. Brings
+  cross-stack depth from NLP research through Power BI analytics — looking
+  for entry-level AI/ML, NLP, applied-ML, or research-engineer roles.
+
+# Top of resume — strongest, JD-relevant differentiators with real metrics.
+key_highlights:
+  - IEEE-published peer-reviewed deep-learning system for spoken-language identification + translation — 93%+ accuracy across 10 languages using Librosa MFCC preprocessing, RNN/CNN hybrid architectures, and attention mechanisms in TensorFlow.
+  - Shipped LLM-powered conversational agents at DUGREE — translated peer-reviewed alignment + conflict-mitigation research into Hugging Face Transformers-based inference pipelines deployed on production web platforms.
+  - Engineered a CNN-based audio classifier (Librosa + TensorFlow) detecting chicken vocalization states with mel-spectrogram preprocessing and class-balanced training — extending transformer-attention techniques into the audio-signal domain.
+  - Delivered an end-to-end customer-churn ML pipeline — SQL data extraction, Pandas + Scikit-learn feature engineering, model evaluation (precision / recall / ROC-AUC), and Power BI dashboard integration with DAX measures.
+  - Mentored graduate students as ML Teaching Assistant — taught NLP, transformer architectures, supervised/unsupervised learning, and feature engineering through Python-based exercises and one-on-one model-debugging sessions.
+
+experience:
+  - company: Chicago State University
+    title: Learning Assistant — Machine Learning
+    location: Chicago, IL
+    start: Jan 2025
+    end: May 2025
+    bullets:
+      - Mentored graduate students on supervised/unsupervised learning, feature engineering, and model evaluation through Python-based coding exercises, Jupyter walkthroughs, and one-on-one debugging sessions.
+      - Guided students through end-to-end NLP model development covering tokenization, transformer architectures, attention mechanisms, and Hugging Face Transformers integration — language detection and semantic translation use cases.
+      - Authored coding assignments and reference solutions for the ML curriculum (precision/recall/F1 metrics, cross-validation, hyperparameter tuning) — improving class project completion rates by clarifying complex topics.
+      - Demonstrated production-relevant ML practices: stratified train/val/test splits, model serialization, and basic FastAPI inference endpoints — bridging coursework and applied engineering.
+
+  - company: DUGREE
+    title: AI Research Intern
+    location: Remote
+    start: Jun 2024
+    end: Aug 2024
+    bullets:
+      - Researched transformer architectures, LLM alignment strategies (RLHF / DPO concepts), and conversation theory to develop LLM-powered conversational agents with ethical-reasoning and conflict-mitigation mechanisms.
+      - Built and iterated prompt-engineering + few-shot example design loops for multi-turn agents — measured response quality via human-eval scoring across alignment, factual-grounding, and conflict-mitigation dimensions.
+      - Translated peer-reviewed ML research into production deployments — integrated Hugging Face Transformers-based agents into web-based platforms supporting balanced, unbiased discourse.
+      - Synthesized LLM alignment-strategy findings into engineering recommendations adopted by cross-functional product stakeholders, accelerating shipped agent behavior aligned with responsible-AI principles.
+
+ai_ml_projects:
+  - name: Spoken Language Identification & Translation
+    publication: "IEEE Xplore — DOI 10.1109/2023"
+    url: https://ieeexplore.ieee.org/document/10395377
+    dates: Aug 2022 – Apr 2023
+    bullets:
+      - Designed and implemented an end-to-end deep-learning system identifying spoken languages and translating them to English in real time — peer-reviewed and published at IEEE Xplore.
+      - Engineered a Librosa-based audio preprocessing pipeline with mel-spectrogram + MFCC feature extraction and time-stretch / noise-injection data augmentation — improved cross-language generalization across 10 target languages.
+      - Designed RNN/CNN hybrid architectures with attention mechanisms in TensorFlow — achieved 93%+ accuracy across 10 languages with parallel inference, outperforming sequence-only baselines.
+      - Validated model performance with stratified cross-validation, per-class precision / recall / F1, and confusion-matrix analysis — surfaced systematic confusion between phonetically-similar language pairs and informed targeted retraining.
+
+  - name: AI Model for Recognizing Chicken Sounds
+    dates: Sep 2024 – Dec 2024
+    bullets:
+      - Built a CNN-based audio classifier interpreting chicken vocalizations from spectrogram data — identifying stress, alarm, and feeding states for smart-farming applications.
+      - Engineered a Librosa + TensorFlow preprocessing pipeline (mel-spectrograms, MFCC features, class-balanced sampling) — handled long-tail label distribution and improved minority-class recall.
+      - Trained the classifier with hyperparameter tuning (Adam optimizer, dropout, early stopping) and tracked experiments with TensorBoard — extended attention-style techniques from NLP into the audio-signal domain.
+
+  - name: Customer Churn Analysis — Power BI + ML
+    dates: Jan 2025 – Apr 2025
+    bullets:
+      - Built end-to-end churn-analytics pipeline — SQL data extraction, Pandas + Scikit-learn feature engineering (one-hot encoding, scaling), and stratified train/val/test splits feeding logistic-regression and random-forest classifiers.
+      - Evaluated models with cross-validation, precision / recall / ROC-AUC, and confusion-matrix analysis — selected best-performing classifier on out-of-time holdout to avoid leakage.
+      - Integrated ML predictions into interactive Power BI dashboards with DAX measures, drill-down filters, and segment overlays — enabled stakeholders to target at-risk customers with data-driven retention strategies.
+
+skills:
+  Languages:
+    - Python
+    - Java
+    - Go
+    - SQL
+    - JavaScript
+
+  ML / AI Frameworks:
+    - TensorFlow
+    - PyTorch
+    - Scikit-learn
+    - Keras
+    - Hugging Face Transformers
+    - Librosa
+    - LangChain (familiar)
+    - TensorBoard
+
+  ML Domains:
+    - Deep Learning
+    - NLP
+    - Computer Vision
+    - Audio Classification
+    - LLM Alignment
+    - Transformer Architectures
+    - Attention Mechanisms
+    - RNN / CNN / LSTM
+    - Sequence Models
+    - Multi-class Classification
+
+  LLM Engineering:
+    - Hugging Face Transformers fine-tuning
+    - Prompt engineering
+    - Few-shot example design
+    - Inference pipeline deployment
+    - LoRA / PEFT (familiar)
+    - RAG / vector retrieval (familiar)
+    - DPO / RLHF concepts (familiar)
+    - Responsible-AI / alignment evaluation
+
+  Audio & Signal Processing:
+    - Librosa
+    - Mel-spectrograms
+    - MFCC features
+    - Data augmentation (noise, time-stretch, pitch-shift)
+    - Audio classification
+
+  ML Practice & Evaluation:
+    - Train/val/test splits
+    - Stratified cross-validation
+    - Hyperparameter tuning
+    - Precision / Recall / F1 / ROC-AUC
+    - Confusion matrix analysis
+    - Feature engineering
+    - Model evaluation
+    - Adam / SGD optimizers
+    - Dropout / Batch norm / Early stopping
+
+  Data & Visualization:
+    - Pandas
+    - NumPy
+    - Matplotlib
+    - Seaborn
+    - Power BI (DAX measures, drill-down filters)
+    - Tableau
+    - ETL Pipelines
+
+  MLOps & Serving:
+    - FastAPI (model-serving endpoints)
+    - Flask
+    - Jupyter / Colab
+    - Model serialization
+    - Docker (familiar)
+    - Git / GitHub
+
+  Web & Frontend:
+    - React
+    - HTML
+    - CSS
+    - JavaScript
+    - Node.js
+    - REST API
+
+  Cloud & DevOps:
+    - AWS
+    - Docker
+    - Jenkins
+    - CI/CD
+    - Git
+    - GitHub
+
+  Databases:
+    - MySQL
+    - MongoDB
+
+  OS & Tools:
+    - Linux (Ubuntu)
+    - Windows
+    - Jupyter
+    - VS Code
+
+education:
+  - school: Chicago State University
+    degree: Master of Science
+    field: Computer Science (GPA 3.9, Honors)
+    location: Chicago, IL
+    start: Jan 2024
+    end: May 2025
+
+  - school: Jawaharlal Nehru Technological University
+    degree: Bachelor of Technology
+    field: Information Technology (GPA 3.5)
+    location: Hyderabad, India
+    start: Aug 2019
+    end: Aug 2023
+
+certifications:
+  - name: Java Programming
+    year: ""
+    issuer: Oracle Academy
+  - name: Cloud Development (HTML, CSS, JavaScript)
+    year: ""
+    issuer: IBM
+  - name: Programming for Everybody — Python
+    year: ""
+    issuer: University of Michigan
+
+honors:
+  - 68th Honors Degree for Outstanding Achievements in Computer Science — Chicago State University (May 2025)
+  - Vice President, ACM Chapter — BVRITH (Dec 2021 – Dec 2022) — led campus tech events and coding competitions
+  - Class Representative & Leader — JNTU undergraduate program (Dec 2019 – Aug 2023)
+
+publications:
+  - venue: IEEE Xplore
+    title: Spoken Language Identification and Translation using Deep Learning
+    year: 2023
+    url: https://ieeexplore.ieee.org/document/10395377
+
+# Archetypes — different framings for tailor_v2 to pick from per JD.
+archetypes:
+  - name: AI/ML Engineer (NLP + Deep Learning)
+    jd_signals:
+      - ai engineer
+      - ml engineer
+      - machine learning engineer
+      - nlp engineer
+      - deep learning
+      - transformers
+      - hugging face
+      - pytorch
+      - tensorflow
+      - applied ml
+      - applied scientist
+    primary_proof_points:
+      - IEEE-published spoken-language ID + translation (93%+ accuracy, 10 langs)
+      - LLM-powered agents at DUGREE (alignment, conversation theory)
+      - CNN audio classifier with Librosa + TensorFlow
+      - Hugging Face Transformers + PyTorch fluency
+
+  - name: Data Scientist / Analytics Engineer
+    jd_signals:
+      - data scientist
+      - data science
+      - analytics engineer
+      - power bi
+      - tableau
+      - dashboard
+      - etl
+      - data pipeline
+      - sql
+      - business analytics
+    primary_proof_points:
+      - Customer-churn analysis Power BI + ML pipeline
+      - ETL + Python/Scikit-learn + interactive dashboards
+      - Pandas / NumPy / Matplotlib analytics fluency
+      - SQL + structured data fundamentals
+
+  - name: Software Engineer (New Grad / L3-L4)
+    jd_signals:
+      - software engineer
+      - associate software engineer
+      - new grad
+      - l3
+      - l4
+      - software developer
+      - junior software engineer
+      - early career
+      - entry level
+    primary_proof_points:
+      - Python / Java / Go / SQL / JavaScript polyglot foundation
+      - REST API + Node.js + React full-stack experience
+      - AWS / Docker / Jenkins / CI/CD applied work
+      - MS in Computer Science (GPA 3.9, honors)
+
+  - name: AI Research Engineer / NLP Researcher
+    jd_signals:
+      - research engineer
+      - applied scientist
+      - ai research
+      - nlp research
+      - llm research
+      - alignment
+      - foundation model
+      - deep learning research
+    primary_proof_points:
+      - IEEE-published peer-reviewed deep-learning system
+      - LLM alignment + conflict-mitigation research at DUGREE
+      - Mentored graduate students on ML / NLP theory + practice
+      - Hands-on transformer architecture experience

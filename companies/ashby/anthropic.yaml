@@ -1,0 +1,8 @@
+name: Anthropic
+ats: ashby
+board_id: anthropic
+active: true
+visa_transfers_h1b: true
+sponsors_new_h1b: true
+keywords_include: [devops, platform, sre, infrastructure, reliability, cloud, kubernetes, ai, ml, gpu]
+keywords_exclude: [intern, director, vp]

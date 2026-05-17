@@ -1,0 +1,42 @@
+id: sai
+name: "Saikrishna Narvaneni"
+email: "your-email@gmail.com"         # UPDATE THIS
+phone: "+1-XXX-XXX-XXXX"              # UPDATE THIS
+visa_status: h1b
+needs_sponsorship: false
+h1b_transfer_ok: true
+experience_years: 8
+target_roles:
+  - devops engineer
+  - platform engineer
+  - site reliability engineer
+  - sre
+  - infrastructure engineer
+  - cloud engineer
+  - service delivery engineer
+  - devops
+  - platform
+education: "Bachelor's in Computer Science"
+match_threshold: 0.65
+
+resume_variants:
+  - id: sai_infra
+    label: "Infrastructure & Cloud Focus"
+    focus: infra
+    minio_path: "resumes/sai/sai_infra.docx"
+  - id: sai_cicd
+    label: "CI/CD & Automation Focus"
+    focus: cicd
+    minio_path: "resumes/sai/sai_cicd.docx"
+  - id: sai_reliability
+    label: "SRE & Reliability Focus"
+    focus: reliability
+    minio_path: "resumes/sai/sai_reliability.docx"
+  - id: sai_leadership
+    label: "Tech Lead & Architecture Focus"
+    focus: leadership
+    minio_path: "resumes/sai/sai_leadership.docx"
+
+notification:
+  telegram_chat_id: "${TELEGRAM_CHAT_ID_SAI}"   # set in .env
+  email: "your-email@gmail.com"                  # UPDATE THIS

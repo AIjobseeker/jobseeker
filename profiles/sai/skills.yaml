@@ -1,0 +1,77 @@
+# Add/remove skills freely — used for job matching and resume tailoring
+skills:
+  # Cloud & Infrastructure
+  - kubernetes
+  - terraform
+  - aws
+  - gcp
+  - azure
+  - docker
+  - helm
+  - ansible
+  - pulumi
+
+  # CI/CD & Automation
+  - jenkins
+  - github actions
+  - gitlab ci
+  - argocd
+  - flux
+  - tekton
+  - spinnaker
+
+  # Observability
+  - prometheus
+  - grafana
+  - datadog
+  - splunk
+  - opentelemetry
+  - jaeger
+  - elk stack
+  - pagerduty
+
+  # Networking & Service Mesh
+  - istio
+  - envoy
+  - nginx
+  - load balancing
+  - dns
+  - vpc
+  - service mesh
+
+  # Programming
+  - python
+  - bash
+  - go
+  - yaml
+
+  # Databases & Queues
+  - postgresql
+  - redis
+  - kafka
+  - rabbitmq
+
+  # SRE Practices
+  - incident management
+  - sli slo sla
+  - chaos engineering
+  - capacity planning
+  - disaster recovery
+  - on-call
+  - runbooks
+  - post-mortems
+  - toil reduction
+
+  # Security
+  - vault
+  - secrets management
+  - iam
+  - rbac
+  - zero trust
+
+  # Methodologies
+  - agile
+  - scrum
+  - gitops
+  - devsecops
+  - platform engineering

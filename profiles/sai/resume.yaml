@@ -1,0 +1,307 @@
+person:
+  name: Sai Krishna Narvaneni
+  email: nsaikrishna1515@gmail.com
+  phone: "+1 (737) 308-5239"
+  location: Austin, TX
+  linkedin: https://linkedin.com/in/saikrishnan-487959240
+
+summary: |
+  Senior Site Reliability / Release Engineer with 8+ years operating
+  production Kubernetes platforms and shipping daily deployments to
+  customer-facing apple.com services via Jenkins + Harness pipelines.
+  Hands-on with infrastructure-as-code (Terraform, Ansible), high-throughput
+  systems (NATS JetStream, Temporal), release-safety tooling (Helm Diff,
+  Applitools visual-regression, Aqua + Goldfinch security scans), and
+  observability (Prometheus, Grafana, OpenTelemetry, Datadog) across AWS
+  and on-prem environments. AWS Certified Solutions Architect
+  (Professional + Associate).
+
+# Top of resume — 5 strongest, JD-relevant achievements with real metrics.
+# Renders just below the summary as "Selected Engineering Highlights".
+key_highlights:
+  - Improved NATS JetStream + Temporal pipeline throughput from 245 req/s to 333 req/s (+36%) by implementing a concurrent dispatch model with semaphore-based processing.
+  - Validated production reliability across 476,791 events in a 30-minute soak test with zero errors and zero redeliveries — proving end-to-end pipeline correctness under load.
+  - Diagnosed a critical ack-floor stall in production where 59,566 messages were stuck for 48+ hours; root-caused, fixed, and added monitoring to prevent recurrence.
+  - Proposed and prototyped MAS token caching to reduce IDMS auth load from ~80,000 calls/day to ~3 token refreshes/day — order-of-magnitude reduction in upstream pressure.
+  - Led migration of 150 ESXi bare-metal hosts to RHEL8-KVM; designed AWS EKS production clusters with Terraform IaC reducing deployment times by 40%.
+
+experience:
+  - company: Apple (via Grid Dynamics LLC)
+    title: Release Engineer
+    location: Austin, TX
+    start: Jun 2025
+    end: present
+    bullets:
+      - Owned release execution and CI/CD reliability for apple.com customer-facing platforms — drove consistent, predictable daily-deploy outcomes across Jenkins and Harness pipelines for tier-1 services.
+      - Improved NATS JetStream + Temporal workflow pipeline throughput from 245 req/s to 333 req/s (+36%) by implementing a concurrent dispatch model with semaphore-based processing; validated 476,791 events in a 30-minute soak test with zero errors and zero redeliveries.
+      - Diagnosed critical ack-floor stall affecting 59,566 messages stuck 48+ hours in production; root-caused via JetStream consumer instrumentation, deployed fix, and added proactive monitoring to prevent recurrence.
+      - Stabilized Harness CI performance — addressed Kyverno pod-spreading issues and 32-CPU runner-node scheduling to improve build reliability and reduce queue times.
+      - Proposed MAS token-caching architecture reducing IDMS auth load from ~80K calls/day to ~3 token refreshes/day; coordinated cross-team review.
+      - Integrated Applitools visual-regression testing into release pipelines — pre-deploy visual diffs catching customer-facing UI regressions before they reached apple.com production traffic.
+      - Hardened release-pipeline security with Aqua container scans and Goldfinch vulnerability gating — blocked non-compliant images from production rollouts and standardized image-trust policies across release-train teams.
+      - Adopted Helm Diff in the release-validation step — surfaced unintended chart drift between dev/stage/prod and prevented misconfigured rollouts before they shipped.
+      - Coordinated Apollo Federation subgraph schema migrations across federated GraphQL services — managed breaking-change rollouts with downstream consumers via version pinning to prevent customer-facing query failures.
+      - Partnered with SRE / SD / Dev teams on incident response, RCA, and post-release verification — running runbooks for on-call coverage and standardizing rollout-validation gates.
+
+  - company: Apple (via Grid Dynamics LLC)
+    title: Service Delivery Engineer
+    location: Austin, TX
+    start: Oct 2024
+    end: May 2025
+    bullets:
+      - Relocated to U.S. to lead Apple infrastructure modernization across on-prem CloudStack and AWS hybrid environments.
+      - Migrated production workloads from on-prem DR sites to AWS using NetApp FSxN and Trident — improved disaster-recovery RTO/RPO and standardized hybrid storage operations.
+      - Migrated Kubernetes workloads from legacy Rancher clusters to custom-built Kubernetes clusters, reducing platform sprawl and standardizing deployment surfaces.
+      - Automated Kubernetes deployments via Terraform and Ansible — standardized rollout workflows, improved deploy consistency across dev/test/prod, reduced manual handoff steps.
+      - Automated Active-Directory-to-GitHub-Enterprise sync — eliminated manual access-control changes for fleet-wide developer onboarding/offboarding.
+      - Managed hybrid DNS infrastructure spanning on-prem and AWS — improved internal-service reliability for cross-environment traffic.
+      - Led secrets-store migration from HCL Consul to internal KMS-encrypted secrets backend; established internal YUM repositories for fleet-wide package distribution.
+      - Upgraded CloudStack platforms, applied VM patches, and optimized hypervisor performance across production fleet.
+
+  - company: Apple (via Grid Dynamics)
+    title: Site Reliability Engineer (SRE)
+    location: Hyderabad, India
+    start: Nov 2022
+    end: Sep 2024
+    bullets:
+      - Operated CloudStack production environments and Kubernetes clusters supporting high-availability internal services with strict SLO/SLA targets.
+      - Led migration of 150 ESXi bare-metal hosts to RHEL8-KVM — improved reliability, reduced hypervisor sprawl, and standardized virtualization fleet across data centers.
+      - Built and operated multi-master Kubernetes clusters with Rancher — enabled scalable continuous delivery for production workloads.
+      - Automated infrastructure provisioning with Ansible and Python — eliminated repetitive operational toil, shortened environment setup time from days to hours.
+      - Implemented backup and failover improvements (snapshot automation, cross-AZ replication) — strengthened DR readiness for production services.
+
+  - company: Mihup Communications
+    title: Senior DevOps / Release Engineer
+    location: Kolkata, India
+    start: Mar 2020
+    end: Nov 2022
+    bullets:
+      - Led architecture transition from monolith (VIA1) to microservices (VIA2) — redesigned release and deployment workflows including blue/green and canary rollout strategies.
+      - Designed and deployed AWS EKS production clusters with Terraform IaC and Ansible configuration management — reduced deployment times by 40%.
+      - Built CI/CD pipelines on Jenkins (multi-branch) with Bitbucket triggers, Maven artifact builds, and Nexus artifact storage — automated full release lifecycle.
+      - Configured EKS platform primitives — HPA, VPA, ConfigMaps, RBAC, network policies, liveness/readiness/startup probes, and KEDA-based custom autoscaling.
+      - Integrated Prometheus + Grafana + EFK Stack for observability and post-release stability tracking; managed RabbitMQ, Redis, and PostgreSQL across environments.
+      - Hardened secrets management with AWS Secrets Manager, KMS encryption, and Sealed Secrets in Bitbucket — secured production-grade EKS workloads.
+
+  - company: GE Aviation (via Kairos Corporate)
+    title: DevOps Engineer
+    location: Hyderabad, India
+    start: Apr 2019
+    end: Mar 2020
+    bullets:
+      - Managed AWS infrastructure (EC2, S3, IAM, VPC, Route53, CloudWatch, ELB) supporting automated CI/CD delivery pipelines for Java/Python/Node.js applications.
+      - Deployed Dockerized applications on AWS EKS — wrote Dockerfiles, deployed containers across UAT and PROD per release cycle.
+      - Steered IAM access management — defined custom JSON policy roles for service-to-service authentication enforcing least-privilege boundaries.
+      - Automated build/deploy with Maven, Jenkins, and Shell/Python scripting — eliminated manual deployment steps for daily release cadence.
+
+  - company: Bright House Financial (via Kairos Corporate)
+    title: Configuration & Release Engineer
+    location: Hyderabad, India
+    start: May 2018
+    end: Mar 2019
+    bullets:
+      - Built CI/CD pipelines on Jenkins for Java/J2EE application releases on Apache Tomcat — implemented nightly automated builds with regression checks.
+      - Managed source-code release lifecycle on Subversion (SVN) — branching, merging, conflict resolution, release tagging.
+      - Implemented server-health monitoring (CPU, RAM, disk, process-level) with automated remediation scripts via Jenkins for high-consumption alerts.
+
+skills:
+  CI/CD & Release:
+    - Jenkins
+    - Harness
+    - ArgoCD
+    - GitOps
+    - GitHub Enterprise
+    - GitHub Actions
+    - Bitbucket
+    - SVN
+    - Maven
+    - Gradle
+    - Nexus
+    - JFrog
+    - Cosign
+    - Helm Diff
+    - Release Trains
+    - Blue/Green
+    - Canary Rollouts
+
+  Containers & Orchestration:
+    - Kubernetes (EKS, OpenShift, Rancher, Custom)
+    - Helm
+    - Docker
+    - Docker BuildKit
+    - Kubernetes Operators
+    - Kyverno
+    - KEDA
+    - Network Policies
+    - HPA / VPA
+    - Sealed Secrets
+    - Pod Scheduling
+
+  Infrastructure as Code:
+    - Terraform
+    - AWS CloudFormation
+    - Ansible
+
+  Cloud:
+    - AWS (EC2, S3, EKS, ECR, EFS, RDS, VPC, Route53, IAM, CloudWatch, FSxN, Secrets Manager, KMS)
+    - Azure
+
+  Observability & Reliability:
+    - Prometheus
+    - Grafana
+    - Datadog
+    - Dynatrace
+    - EFK Stack
+    - OpenTelemetry (OTEL)
+    - SLO / SLI / SLA
+    - Incident Response
+    - RCA
+    - High Availability
+    - Disaster Recovery
+    - Release Readiness
+
+  Workflow & Messaging:
+    - Temporal
+    - NATS JetStream
+    - HTTP Bridge
+    - RabbitMQ
+    - Redis
+
+  Storage & Virtualization:
+    - NetApp (FSxN, Astra, Trident)
+    - CloudStack
+    - VMware
+    - RHEL KVM
+
+  Scripting & Automation:
+    - Python
+    - Shell / Bash
+
+  Databases:
+    - MySQL
+    - PostgreSQL
+    - MongoDB
+
+  Security & Auth:
+    - MAS / OIDC token caching
+    - HashiCorp Consul
+    - Internal secret stores
+    - TLS / certificates
+    - IAM / RBAC
+    - Aqua Security (container scans)
+    - Goldfinch (vulnerability gating)
+    - Image-trust policy
+
+  Quality & Visual Regression:
+    - Applitools (visual diff)
+    - Pre-deploy regression gates
+    - Release-validation tests
+
+  API & Schema:
+    - GraphQL Federation
+    - Apollo Federation
+    - Subgraph schema management
+    - Breaking-change rollouts
+    - Schema versioning
+
+  OS & Tools:
+    - Linux (RHEL, Ubuntu)
+    - macOS
+    - Windows
+    - Apache
+    - NGINX
+    - Jira
+    - ServiceNow
+
+education:
+  - school: Jawaharlal Nehru Technological University (JNTUH)
+    degree: Bachelor of Technology
+    field: Civil Engineering
+    location: Hyderabad, India
+    start: 2013
+    end: 2018
+
+certifications:
+  - name: AWS Certified Solutions Architect – Professional
+    year: 2024
+    url: https://www.credly.com/users/sai-krishna-narvaneni
+  - name: AWS Certified Solutions Architect – Associate
+    year: 2024
+    url: https://www.credly.com/users/sai-krishna-narvaneni
+
+publications: []
+awards: []
+
+# Archetypes — different framings of the same career; tailor_v2 picks ONE per JD.
+archetypes:
+  - name: Site Reliability Engineer / Platform Engineer
+    jd_signals:
+      - site reliability
+      - sre
+      - platform engineer
+      - on-call
+      - slo
+      - sli
+      - incident response
+      - observability
+      - prometheus
+      - grafana
+      - reliability engineering
+      - high availability
+      - disaster recovery
+      - kubernetes operators
+    primary_proof_points:
+      - NATS/Temporal pipeline 245→333 req/s, 476,791-event soak test, ack-floor diagnosis
+      - 150-host ESXi → RHEL8-KVM migration at Apple
+      - Multi-master Kubernetes with Rancher at Mihup
+      - DR readiness improvements at Apple SRE
+
+  - name: Release Engineer / CI-CD Platform
+    jd_signals:
+      - release engineer
+      - release management
+      - ci/cd
+      - jenkins
+      - harness
+      - argocd
+      - gitops
+      - github actions
+      - deployment automation
+      - release orchestration
+    primary_proof_points:
+      - Apple Release Engineering — Jenkins + Harness CI/CD ownership for tier-1 platforms
+      - Harness CI perf + Kyverno pod-spreading + 32-CPU runner scheduling
+      - 40% deployment-time reduction at Mihup
+      - Multi-branch Jenkins CI/CD with Maven + Nexus artifact lifecycle
+
+  - name: Cloud / DevOps Engineer
+    jd_signals:
+      - cloud engineer
+      - devops engineer
+      - aws
+      - eks
+      - terraform
+      - ansible
+      - infrastructure as code
+      - hybrid cloud
+      - cloud migration
+    primary_proof_points:
+      - On-prem CloudStack → AWS migration with NetApp FSxN + Trident at Apple
+      - AWS EKS production design with Terraform IaC at Mihup
+      - Hybrid DNS and secrets-store migration (HCL Consul → in-house) at Apple
+      - MAS token caching reducing IDMS load 80K → 3 calls/day
+
+  - name: Cloud / Solutions Architect
+    jd_signals:
+      - cloud architect
+      - solutions architect
+      - aws architect
+      - cloud architecture
+      - migration architect
+      - hybrid cloud architecture
+      - landing zone
+    primary_proof_points:
+      - AWS Certified Solutions Architect – Professional + Associate (2024)
+      - On-prem to AWS migration architecture at Apple (CloudStack → FSxN/Trident)
+      - AWS EKS production architecture and IaC at Mihup
+      - Hybrid cloud/on-prem DNS and secrets architecture at Apple

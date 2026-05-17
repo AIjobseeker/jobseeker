@@ -23,8 +23,12 @@ profiles/*/resumes/*.doc
 # ─────────── Local artifacts ───────────
 /tmp/jobseeker_*/
 .jobseeker/
+.cache/
 seen.db*
 docs/*.pdf
+
+# ─────────── Bundled external repos (not part of jobseeker) ───────────
+SDE-Interview-and-Prep-Roadmap/
 
 # ─────────── Python ───────────
 __pycache__/

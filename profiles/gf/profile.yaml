@@ -1,0 +1,40 @@
+id: gf
+name: "Pooja Tanneru"
+email: "tannerupooja01@gmail.com"
+phone: "+1-425-393-8144"
+linkedin: "https://www.linkedin.com/in/pooja-tanneru-87473b262/"
+visa_status: opt
+needs_sponsorship: true
+h1b_transfer_ok: false
+experience_years: 1
+target_roles:
+  - ai engineer
+  - ml engineer
+  - machine learning engineer
+  - nlp engineer
+  - data scientist
+  - data engineer
+  - software engineer
+  - associate software engineer
+  - new grad software engineer
+education: "MS Computer Science, Chicago State University (May 2025), GPA 3.9"
+match_threshold: 0.55
+
+# AI/ML-focused variants — entry-level. Primary is the AIML build of her resume.
+resume_variants:
+  - id: gf_aiml
+    label: "AI/ML Engineer (primary)"
+    focus: aiml
+    minio_path: "resumes/gf/gf_aiml.docx"
+  - id: gf_swe
+    label: "Software Engineer (new grad)"
+    focus: swe
+    minio_path: "resumes/gf/gf_swe.docx"
+  - id: gf_data
+    label: "Data Scientist / Data Engineer"
+    focus: data
+    minio_path: "resumes/gf/gf_data.docx"
+
+notification:
+  telegram_chat_id: "${TELEGRAM_CHAT_ID_GF}"
+  email: "tannerupooja01@gmail.com"

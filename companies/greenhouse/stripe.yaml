@@ -1,0 +1,8 @@
+name: Stripe
+ats: greenhouse
+board_id: stripe
+active: true
+visa_transfers_h1b: true
+sponsors_new_h1b: true
+keywords_include: [devops, platform, sre, infrastructure, reliability, cloud, kubernetes, k8s, engineering]
+keywords_exclude: [intern, internship, director, vp, "vice president"]

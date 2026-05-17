@@ -1,0 +1,145 @@
+# Per-company overrides for the html_scraper service.
+#
+# Schema (one entry per company; "name" must match seed_500.yaml exactly):
+#   name:           <string, must match seed_500.yaml entry>
+#   url:            <full URL the scraper should hit>
+#   js_required:    <bool, default false; true forces Playwright>
+#   pagination:     "next-link" | "page-param" | "infinite-scroll" | "none"
+#   max_pages:      <int, default 3>
+#   page_param:     <query param name when pagination=page-param>
+#   page_start:     <starting page number, default 1>
+#   next_selector:  <CSS selector for next-page link when pagination=next-link>
+#   notes:          <human notes — not used at runtime>
+#
+# Companies present in seed_500.yaml as ats=custom (and not handled by the Go
+# scraper's hardcoded modules) but missing here will use safe defaults
+# (career_url, no JS, no pagination, max 3 pages).
+
+targets:
+  # ─────────────── Retail ───────────────
+  - name: Walmart Global Tech
+    url: https://careers.walmart.com/results?q=software+engineer&type=Technology
+    js_required: true
+    pagination: page-param
+    page_param: page
+    max_pages: 5
+    notes: "JS-rendered SPA. Some endpoints sit behind PerimeterX — Playwright is mandatory; CAPTCHA possible."
+
+  - name: Costco
+    url: https://www.costco.com/jobs.html
+    js_required: false
+    pagination: none
+    max_pages: 1
+    notes: "Static landing page links to Workday-hosted board for most reqs."
+
+  - name: Best Buy
+    url: https://www.bestbuy-jobs.com/search-jobs/Software%20Engineer/
+    js_required: true
+    pagination: page-param
+    page_param: p
+    max_pages: 4
+    notes: "Phenom People SPA; lazy-loads via XHR after initial render."
+
+  - name: Home Depot
+    url: https://careers.homedepot.com/job-search-results/?keyword=software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: pageNumber
+    max_pages: 4
+
+  - name: Lowe's
+    url: https://talent.lowes.com/us/en/search-results?keywords=software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: from
+    page_start: 0
+    max_pages: 4
+    notes: "Avature-backed; from= increments by 25 per page (best-effort)."
+
+  - name: Target
+    url: https://corporate.target.com/careers/jobs?roles=technology
+    js_required: true
+    pagination: infinite-scroll
+    max_pages: 3
+    notes: "Infinite scroll; we just take page 1 worth and call it done."
+
+  # ─────────────── Media ───────────────
+  - name: Disney
+    url: https://jobs.disneycareers.com/search-jobs/software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: p
+    max_pages: 4
+    notes: "Phenom-style ATS; results are server-rendered enough that httpx sometimes works."
+
+  - name: NBCUniversal
+    url: https://www.nbcunicareers.com/search-jobs/software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: p
+    max_pages: 3
+
+  - name: Paramount
+    url: https://careers.paramount.com/global/en/search-results?keywords=software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: from
+    page_start: 0
+    max_pages: 3
+    notes: "Avature SPA."
+
+  - name: Comcast
+    url: https://jobs.comcast.com/jobs?keywords=software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: page
+    max_pages: 3
+
+  - name: Sony Interactive
+    url: https://sonyinteractive.com/en/careers/jobs/?keyword=software+engineer
+    js_required: true
+    pagination: next-link
+    next_selector: "a.pagination__next, a[rel=next]"
+    max_pages: 3
+
+  - name: Sony
+    url: https://www.sonyjobs.com/search-jobs/software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: p
+    max_pages: 3
+
+  # ─────────────── Telecom ───────────────
+  - name: AT&T
+    url: https://careers.att.com/us/en/search-results?keywords=software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: from
+    page_start: 0
+    max_pages: 4
+    notes: "Eightfold-backed SPA; from= step is 10."
+
+  - name: Verizon
+    url: https://mycareer.verizon.com/jobs/?keywords=software+engineer
+    js_required: true
+    pagination: page-param
+    page_param: page
+    max_pages: 4
+
+  # ─────────────── Banks / Financial ───────────────
+  - name: Wells Fargo
+    url: https://www.wellsfargojobs.com/en/search-jobs/software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: p
+    max_pages: 4
+    notes: "Eightfold; lazy XHR. Playwright with 'networkidle' wait is reliable."
+
+  - name: JPMorgan Chase Tech
+    url: https://careers.jpmorgan.com/us/en/search-results?keywords=software%20engineer
+    js_required: true
+    pagination: page-param
+    page_param: from
+    page_start: 0
+    max_pages: 4
+    notes: "Avature SPA; jobs ship as a JSON island inside the HTML — Ollama can read it."

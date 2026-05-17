@@ -1,0 +1,37 @@
+skills:
+  # Programming
+  - python
+  - java
+  - javascript
+  - sql
+  - html
+  - css
+
+  # Frameworks (update based on actual skills)
+  - react
+  - node.js
+  - spring boot
+  - django
+  - flask
+
+  # Data
+  - pandas
+  - numpy
+  - data analysis
+  - data visualization
+  - tableau
+  - power bi
+  - excel
+
+  # Tools
+  - git
+  - github
+  - jira
+  - agile
+  - rest apis
+  - postgresql
+  - mysql
+
+  # Cloud (if any)
+  - aws basics
+  - gcp basics

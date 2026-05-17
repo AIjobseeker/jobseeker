@@ -1,0 +1,173 @@
+"""DeepSeek-R1 resume tailor — reasoning model for strict rule-following rewrites."""
+from __future__ import annotations
+
+import logging
+import re
+from pathlib import Path
+
+from docx import Document
+from temporalio import activity
+
+from shared.config import settings
+from shared.models import JobPost, MatchResult, UserProfile
+from shared.ollama_client import chat
+
+log = logging.getLogger("worker.resume")
+
+RESUME_DIR = Path("/app/profiles")
+
+TAILOR_PROMPT = """\
+You are a world-class resume writer specialising in technical roles.
+Rewrite the candidate's resume to precisely match this job description.
+
+JOB:
+Company: {company}
+Title: {title}
+Description:
+{description}
+
+CANDIDATE SKILLS: {skills}
+
+BASE RESUME (numbered paragraph format):
+{resume_content}
+
+RULES — follow every one:
+- Rewrite every [NORMAL] and [BULLET] paragraph to mirror the JD's exact language, \
+action verbs, and keywords
+- Open the summary with the job title or closest equivalent, then immediately lead \
+with the most relevant skills in the JD's vocabulary
+- Reorder bullets ONLY within the same [ROLE] section — never move content across roles
+- Leave [HEADER], [ROLE], and [EMPTY] lines structurally unchanged (light wording ok for [ROLE])
+- Never invent facts — every claim must be traceable to the original
+- Preserve all numbers, dollar amounts, dates, and company names exactly
+- Return the EXACT same number of lines as the input
+- Output ONLY the numbered paragraph list, no commentary
+
+OUTPUT FORMAT (same as input):
+1|[HEADER] Name
+2|[NORMAL] Contact info
+...
+"""
+
+
+def _read_docx_structured(docx_path: Path) -> str:
+    """Extract numbered, tagged paragraph list from a DOCX file."""
+    doc = Document(str(docx_path))
+    lines = []
+    for i, para in enumerate(doc.paragraphs, start=1):
+        text = para.text.strip()
+        if not text:
+            lines.append(f"{i}|[EMPTY]")
+            continue
+        style = para.style.name.lower()
+        is_heading = "heading" in style
+        is_bold = any(r.bold for r in para.runs if r.text.strip())
+        is_allcaps = text.isupper() and len(text) > 3
+        is_bullet = "list" in style or text.startswith(("•", "-", "–", "*"))
+        # Detect role lines: title|company|dates pattern
+        is_role = bool(re.search(r"\d{4}", text) and "|" in text)
+
+        if is_role:
+            tag = "[ROLE]"
+        elif is_heading or is_bold or is_allcaps:
+            tag = "[HEADER]"
+        elif is_bullet:
+            tag = "[BULLET]"
+        else:
+            tag = "[NORMAL]"
+
+        lines.append(f"{i}|{tag} {text}")
+    return "\n".join(lines)
+
+
+def _apply_rewrites_to_docx(original_path: Path, output_path: Path, rewritten: str) -> None:
+    """Apply rewritten paragraph text back onto the original DOCX template."""
+    rewrites: dict[int, str] = {}
+    for line in rewritten.splitlines():
+        line = line.strip()
+        if not line or "|" not in line:
+            continue
+        num_str, rest = line.split("|", 1)
+        try:
+            num = int(num_str.strip())
+        except ValueError:
+            continue
+        text = re.sub(r"^\[(HEADER|NORMAL|BULLET|ROLE|EMPTY)\]\s*", "", rest).strip()
+        if "[EMPTY]" not in rest:
+            rewrites[num] = text
+
+    import shutil
+    shutil.copy2(str(original_path), str(output_path))
+    doc = Document(str(output_path))
+
+    for idx, para in enumerate(doc.paragraphs, start=1):
+        if idx not in rewrites:
+            continue
+        new_text = rewrites[idx]
+        if not new_text:
+            continue
+        # Preserve formatting of first run, clear the rest
+        if para.runs:
+            para.runs[0].text = new_text
+            for run in para.runs[1:]:
+                run.text = ""
+        else:
+            para.add_run(new_text)
+
+    doc.save(str(output_path))
+
+
+@activity.defn
+async def tailor_resume(job_dict: dict, profile_dict: dict, match_dict: dict) -> str:
+    """
+    Tailor resume for a specific job. Returns the local path of the generated DOCX.
+    The storage activity will upload it to MinIO.
+    """
+    job = JobPost(**job_dict)
+    profile = UserProfile(**profile_dict)
+    match = MatchResult(**match_dict)
+
+    # Find the right resume variant
+    variant_id = match.recommended_variant or (
+        profile.resume_variants[0].id if profile.resume_variants else "base"
+    )
+    variant = next(
+        (v for v in profile.resume_variants if v.id == variant_id),
+        profile.resume_variants[0] if profile.resume_variants else None,
+    )
+
+    if not variant:
+        raise RuntimeError(f"No resume variant found for {profile.id}")
+
+    # Resume is stored locally at /app/profiles/{person_id}/resumes/{variant_id}.docx
+    docx_path = RESUME_DIR / profile.id / "resumes" / f"{variant_id}.docx"
+    if not docx_path.exists():
+        raise FileNotFoundError(
+            f"Resume not found at {docx_path}. "
+            f"Run: make upload-resume PERSON={profile.id} VARIANT={variant_id}"
+        )
+
+    structured = _read_docx_structured(docx_path)
+
+    rewritten = await chat(
+        settings.ollama_model_resume,
+        TAILOR_PROMPT.format(
+            company=job.company,
+            title=job.title,
+            description=job.description_text[:4000],
+            skills=", ".join(profile.skills),
+            resume_content=structured,
+        ),
+        max_tokens=4000,
+        think=True,  # qwen3: reason through the 8 formatting rules before writing
+    )
+
+    # Build output path
+    safe_company = re.sub(r"[^\w-]", "-", job.company)
+    safe_title = re.sub(r"[^\w-]", "-", job.title)
+    output_filename = f"{profile.id}_{safe_company}_{safe_title}_resume.docx"
+    output_path = Path("/tmp") / output_filename
+
+    _apply_rewrites_to_docx(docx_path, output_path, rewritten)
+    log.info("Resume tailored for %s @ %s → %s", job.title, job.company, output_path)
+    return str(output_path)

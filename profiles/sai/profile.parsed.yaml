@@ -1,0 +1,39 @@
+person:
+  name: Saikrishna Narvaneni
+seniority:
+  level: staff
+core_skills:
+  - kubernetes
+  - terraform
+  - aws
+  - python
+  - go
+  - linux
+  - ci/cd
+  - prometheus
+  - observability
+adjacent_skills:
+  - snowflake
+  - kafka
+  - spark
+target_titles:
+  - site reliability engineer
+  - platform engineer
+  - devops engineer
+  - infrastructure engineer
+  - staff sre
+  - staff software engineer
+  - cloud engineer
+  - cloud architect
+red_flags:
+  - manager
+  - director
+  - vp
+  - sales
+  - account executive
+preferred_signals:
+  - h1b transfer
+profile_summary: >
+  Staff-level SRE / Platform engineer with 8 years building Kubernetes
+  platforms, Terraform infrastructure, and observability stacks on AWS.
+  Looking for senior or staff IC roles in platform, SRE, or infrastructure.
