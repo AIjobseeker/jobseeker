@@ -479,6 +479,15 @@ class ProfileScorer:
                     notes.append(f"red flag '{flag}' in description")
                     break
 
+        # Check description-level red flags (separate from title flags so both can fire).
+        # Used for entry-level profiles to catch "5+ years required" buried in JD body.
+        desc_red_flags: list[str] = [f.lower() for f in self.profile.get("desc_red_flags", [])]
+        for flag in desc_red_flags:
+            if flag and flag in desc_lower:
+                adjustments["desc_red_flag_penalty"] = -0.25
+                notes.append(f"desc red flag '{flag}' in description")
+                break
+
         no_sponsorship = False
         for phrase in NO_SPONSORSHIP_PHRASES:
             if phrase in desc_lower:

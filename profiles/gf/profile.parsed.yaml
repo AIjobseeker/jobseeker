@@ -121,6 +121,18 @@ red_flags:
   - 3 to 5 years
   - 4 to 6 years
 
+# Jobs where the JD body mentions these are wrong seniority — checked in description too.
+desc_red_flags:
+  - "3+ years of experience"
+  - "4+ years of experience"
+  - "5+ years of experience"
+  - "minimum of 3 years"
+  - "minimum of 4 years"
+  - "minimum of 5 years"
+  - "requires 3 years"
+  - "requires 4 years"
+  - "requires 5 years"
+
 # Tell the scorer not to run SRE-niche and coding-heavy logic —
 # those constants are tuned for Sai's infra profile and penalise
 # exactly the ML/AI roles Pooja is targeting.

@@ -38,5 +38,6 @@ resume_variants:
     minio_path: "resumes/sai/sai_leadership.docx"
 
 notification:
-  telegram_chat_id: "${TELEGRAM_CHAT_ID_SAI}"   # set in .env
-  email: "your-email@gmail.com"                  # UPDATE THIS
+  telegram_chat_id: "8330150005"
+  telegram_bot_token: "8478914329:AAHBMwUMI0Cdw0H2MrsFbxaWdLRipZGUNKY"
+  email: "your-email@gmail.com"

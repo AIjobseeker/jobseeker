@@ -62,12 +62,14 @@ async def notify_telegram(
         log.warning("No Telegram chat_id for %s — skipping notification", profile.id)
         return False
 
-    if not settings.telegram_bot_token:
-        log.warning("TELEGRAM_BOT_TOKEN not set — skipping notification")
+    # Use per-profile bot token if available, fall back to global TELEGRAM_BOT_TOKEN.
+    bot_token = profile.notification.telegram_bot_token or settings.telegram_bot_token
+    if not bot_token:
+        log.warning("No Telegram bot token for %s — skipping notification", profile.id)
         return False
 
     text = _format_message(job, profile, match, docs)
-    url = TELEGRAM_API.format(token=settings.telegram_bot_token)
+    url = TELEGRAM_API.format(token=bot_token)
 
     async with httpx.AsyncClient(timeout=15) as client:
         resp = await client.post(url, json={

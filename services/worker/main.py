@@ -14,6 +14,7 @@ from temporalio.common import RetryPolicy
 from temporalio.worker import Worker
 
 from shared.config import settings
+from scraper.main import load_active_companies, fetch_company_jobs
 from worker.activities import (
     is_new_job,
     match_job,
@@ -95,6 +96,8 @@ async def main() -> None:
             update_application_status,
             sync_to_sheet,
             load_profile_activity,
+            load_active_companies,
+            fetch_company_jobs,
         ],
     )
     log.info("Worker started — listening on queue '%s'", settings.temporal_task_queue)

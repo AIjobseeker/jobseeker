@@ -18,7 +18,7 @@ target_roles:
   - associate software engineer
   - new grad software engineer
 education: "MS Computer Science, Chicago State University (May 2025), GPA 3.9"
-match_threshold: 0.55
+match_threshold: 0.65
 
 # AI/ML-focused variants — entry-level. Primary is the AIML build of her resume.
 resume_variants:
@@ -36,5 +36,6 @@ resume_variants:
     minio_path: "resumes/gf/gf_data.docx"
 
 notification:
-  telegram_chat_id: "${TELEGRAM_CHAT_ID_GF}"
+  telegram_chat_id: "6517690100"
+  telegram_bot_token: "8797380044:AAGWvOdCcPvoOVNoLEZ_wr-wCnRnmt4Z_Hg"
   email: "tannerupooja01@gmail.com"

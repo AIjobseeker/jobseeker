@@ -36,6 +36,7 @@ class ScoredJob(BaseModel):
     # Block G — populated by scorer's assess_legitimacy().
     legitimacy_tier: str = ""
     legitimacy_signals: list[str] = Field(default_factory=list)
+    rule_adjustments: dict[str, float] = Field(default_factory=dict)
 
     @property
     def dedup_key_inputs(self) -> tuple[str, str]:

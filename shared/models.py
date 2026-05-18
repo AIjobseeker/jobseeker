@@ -106,6 +106,7 @@ class ResumeVariant(BaseModel):
 
 class NotificationConfig(BaseModel):
     telegram_chat_id: str
+    telegram_bot_token: str = ""   # per-person bot token; falls back to TELEGRAM_BOT_TOKEN
     email: Optional[str] = None
 
 
