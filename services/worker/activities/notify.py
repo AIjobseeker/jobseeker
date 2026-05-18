@@ -1,7 +1,9 @@
-"""Telegram notification activity — sends rich match alert with resume + cover as attachments."""
+"""Telegram notification — rich HTML message + resume/cover as file attachments."""
 from __future__ import annotations
 
+import html
 import logging
+import shutil
 import tempfile
 from datetime import datetime
 from pathlib import Path
@@ -20,6 +22,11 @@ SEND_MESSAGE_URL = "https://api.telegram.org/bot{token}/sendMessage"
 SEND_DOCUMENT_URL = "https://api.telegram.org/bot{token}/sendDocument"
 
 
+def e(s: str) -> str:
+    """HTML-escape a string for safe use in Telegram HTML mode."""
+    return html.escape(str(s), quote=False)
+
+
 def _minio_client() -> Minio:
     return Minio(
         settings.minio_endpoint,
@@ -30,15 +37,15 @@ def _minio_client() -> Minio:
 
 
 def _download_temp(minio_path: str, suffix: str) -> Path | None:
-    """Download a MinIO object to a temp file. Returns path or None on failure."""
+    """Download a MinIO object to a named temp file. Returns path or None."""
     try:
         client = _minio_client()
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
-        tmp.close()
-        client.fget_object(settings.minio_bucket, minio_path, tmp.name)
-        return Path(tmp.name)
-    except (S3Error, Exception) as e:
-        log.warning("Could not download %s from MinIO: %s", minio_path, e)
+        fd, tmp_path = tempfile.mkstemp(suffix=suffix)
+        import os; os.close(fd)
+        client.fget_object(settings.minio_bucket, minio_path, tmp_path)
+        return Path(tmp_path)
+    except (S3Error, Exception) as exc:
+        log.warning("Could not download %s from MinIO: %s", minio_path, exc)
         return None
 
 
@@ -52,14 +59,14 @@ async def _send_message(
     payload: dict = {
         "chat_id": chat_id,
         "text": text,
-        "parse_mode": "Markdown",
+        "parse_mode": "HTML",
         "disable_web_page_preview": True,
     }
     if reply_markup:
         payload["reply_markup"] = reply_markup
     resp = await client.post(SEND_MESSAGE_URL.format(token=token), json=payload)
     if resp.status_code != 200:
-        log.error("sendMessage failed: %s %s", resp.status_code, resp.text[:200])
+        log.error("sendMessage failed: %s — %s", resp.status_code, resp.text[:300])
         return False
     return True
 
@@ -69,16 +76,18 @@ async def _send_document(
     token: str,
     chat_id: str,
     file_path: Path,
+    filename: str,
     caption: str,
 ) -> bool:
     with open(file_path, "rb") as f:
         resp = await client.post(
             SEND_DOCUMENT_URL.format(token=token),
             data={"chat_id": chat_id, "caption": caption},
-            files={"document": (file_path.name, f)},
+            files={"document": (filename, f)},
+            timeout=60,
         )
     if resp.status_code != 200:
-        log.error("sendDocument failed: %s %s", resp.status_code, resp.text[:200])
+        log.error("sendDocument failed: %s — %s", resp.status_code, resp.text[:300])
         return False
     return True
 
@@ -90,7 +99,6 @@ async def notify_telegram(
     match_dict: dict,
     docs_dict: dict,
 ) -> bool:
-    """Send Telegram notification: job alert message + resume file + cover letter."""
     job = JobPost(**job_dict)
     profile = UserProfile(**profile_dict)
     match = MatchResult(**match_dict)
@@ -106,70 +114,73 @@ async def notify_telegram(
         log.warning("No Telegram bot token for %s — skipping", profile.id)
         return False
 
-    matched_skills = ", ".join(match.matched_skills[:6]) or "—"
-    missing_skills = ", ".join(match.missing_skills[:3]) or "None"
-    visa_flag = "✅ Visa OK" if match.visa_ok else "⚠️ Check Visa"
-    score_bar = "🟢" if match.score >= 0.80 else "🟡" if match.score >= 0.65 else "🔴"
+    matched_skills = e(", ".join(match.matched_skills[:6]) or "—")
+    missing_skills = e(", ".join(match.missing_skills[:3]) or "None")
+    visa_line = "Visa OK" if match.visa_ok else "Check Visa"
+    score_icon = "🟢" if match.score >= 0.80 else "🟡" if match.score >= 0.65 else "🔴"
+    reasoning = e((match.reasoning or "")[:250])
 
-    # Truncate study guide to fit Telegram's 4096 char message limit
-    study_preview = docs.study_guide[:1200].strip()
-    if len(docs.study_guide) > 1200:
-        study_preview += "\n…"
+    # Trim study guide to keep total message under 4096 chars
+    study = (docs.study_guide or "").strip()
+    study_preview = e(study[:900]) + (" …" if len(study) > 900 else "")
 
     main_text = (
-        f"{score_bar} *{job.company} — {job.title}*\n"
-        f"{job.location or 'Location TBD'}\n"
-        f"Match: *{match.score:.0%}* | {visa_flag}\n"
+        f"{score_icon} <b>{e(job.company)} — {e(job.title)}</b>\n"
+        f"{e(job.location or 'Location TBD')}\n"
+        f"Match: <b>{match.score:.0%}</b> | {visa_line}\n"
         f"\n"
-        f"*Skills matched:* {matched_skills}\n"
-        f"*Gaps:* {missing_skills}\n"
+        f"<b>Matched:</b> {matched_skills}\n"
+        f"<b>Gaps:</b> {missing_skills}\n"
         f"\n"
-        f"*Reasoning:* _{match.reasoning[:300]}_\n"
+        f"<i>{reasoning}</i>\n"
         f"\n"
-        f"📚 *Study Guide:*\n"
-        f"```\n{study_preview}\n```\n"
+        f"<b>Study Guide:</b>\n"
+        f"<pre>{study_preview}</pre>\n"
         f"\n"
-        f"_Generated {datetime.utcnow().strftime('%b %d %H:%M')} UTC_"
+        f"<i>Generated {datetime.utcnow().strftime('%b %d %H:%M')} UTC</i>"
     )
 
-    apply_button = {
-        "inline_keyboard": [[{"text": "🔗 Apply Now", "url": job.url}]]
-    }
+    apply_button = {"inline_keyboard": [[{"text": "Apply Now", "url": job.url}]]}
+
+    safe_company = "".join(c if c.isalnum() or c in "-_" else "_" for c in job.company)
+    safe_title = "".join(c if c.isalnum() or c in "-_" else "_" for c in job.title)
 
     async with httpx.AsyncClient(timeout=30) as http:
-        # 1. Main message
         await _send_message(http, bot_token, chat_id, main_text, reply_markup=apply_button)
 
-        # 2. Resume DOCX as file attachment
-        resume_file = _download_temp(docs.resume_minio_path, suffix=".docx")
-        if resume_file:
-            # Rename to a human-readable filename before sending
-            readable = resume_file.parent / f"{job.company}_{job.title}_resume.docx".replace(" ", "_")
-            resume_file.rename(readable)
+        # Resume as DOCX file attachment
+        resume_tmp = _download_temp(docs.resume_minio_path, suffix=".docx")
+        if resume_tmp:
+            resume_filename = f"{safe_company}_{safe_title}_resume.docx"
             await _send_document(
-                http, bot_token, chat_id, readable,
-                caption=f"📄 Tailored resume for {job.title} @ {job.company}",
+                http, bot_token, chat_id, resume_tmp,
+                filename=resume_filename,
+                caption=f"Tailored resume — {job.title} @ {job.company}",
             )
-            readable.unlink(missing_ok=True)
+            resume_tmp.unlink(missing_ok=True)
+        else:
+            log.warning("Resume not available for %s @ %s", job.title, job.company)
 
-        # 3. Cover letter — send inline if short enough, otherwise as file
-        cover_file = _download_temp(docs.cover_letter_minio_path, suffix=".txt")
-        if cover_file:
-            cover_text = cover_file.read_text(encoding="utf-8").strip()
-            cover_file.unlink(missing_ok=True)
-
-            if len(cover_text) <= 3800:
-                cover_msg = f"✉️ *Cover Letter — {job.company}*\n\n{cover_text}"
+        # Cover letter — inline if fits, else as file
+        cover_tmp = _download_temp(docs.cover_letter_minio_path, suffix=".txt")
+        if cover_tmp:
+            cover_text = cover_tmp.read_text(encoding="utf-8").strip()
+            cover_tmp.unlink(missing_ok=True)
+            if len(cover_text) <= 3500:
+                cover_msg = f"<b>Cover Letter — {e(job.company)}</b>\n\n{e(cover_text)}"
                 await _send_message(http, bot_token, chat_id, cover_msg)
             else:
-                # Too long for a message; send as a text file
-                tmp_cover = Path(tempfile.mktemp(suffix=".txt"))
-                tmp_cover.write_text(cover_text, encoding="utf-8")
+                cover_file = Path(tempfile.mktemp(suffix=".txt"))
+                cover_file.write_text(cover_text, encoding="utf-8")
+                cover_filename = f"{safe_company}_{safe_title}_cover.txt"
                 await _send_document(
-                    http, bot_token, chat_id, tmp_cover,
-                    caption=f"✉️ Cover letter for {job.title} @ {job.company}",
+                    http, bot_token, chat_id, cover_file,
+                    filename=cover_filename,
+                    caption=f"Cover letter — {job.title} @ {job.company}",
                 )
-                tmp_cover.unlink(missing_ok=True)
+                cover_file.unlink(missing_ok=True)
+        else:
+            log.warning("Cover letter not available for %s @ %s", job.title, job.company)
 
     log.info("Notification sent to %s for %s @ %s", profile.id, job.title, job.company)
     return True
