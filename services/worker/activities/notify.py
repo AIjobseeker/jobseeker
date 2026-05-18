@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 import logging
+import os
 import shutil
 import tempfile
 from datetime import datetime
@@ -41,7 +42,7 @@ def _download_temp(minio_path: str, suffix: str) -> Path | None:
     try:
         client = _minio_client()
         fd, tmp_path = tempfile.mkstemp(suffix=suffix)
-        import os; os.close(fd)
+        os.close(fd)
         client.fget_object(settings.minio_bucket, minio_path, tmp_path)
         return Path(tmp_path)
     except (S3Error, Exception) as exc:
