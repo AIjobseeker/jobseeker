@@ -1,6 +1,7 @@
-"""Qwen3 cover letter generator — local LLM for human-sounding prose."""
+"""Claude Sonnet cover letter generator — human-sounding, strategically targeted prose."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from pathlib import Path
@@ -8,14 +9,14 @@ from pathlib import Path
 from temporalio import activity
 
 from shared.config import settings
+from shared.llm_client import claude_chat
 from shared.models import JobPost, MatchResult, UserProfile
-from shared.ollama_client import chat
 
 log = logging.getLogger("worker.cover_letter")
 
 COVER_LETTER_PROMPT = """\
 You are an expert career coach writing a cover letter for a highly skilled engineer.
-This letter must be specific, impressive, and never sound AI-generated or generic.
+This letter must get the candidate an interview. Every sentence must earn its place.
 
 JOB:
 Company: {company}
@@ -27,20 +28,25 @@ CANDIDATE:
 Name: {name}
 Experience: {experience_years} years in {target_roles}
 Key Skills: {skills}
-Strongest match points: {matched_skills}
+Strongest match points for THIS role: {matched_skills}
 Visa: {visa_note}
+
+STRATEGY — think through this before writing:
+1. What are the top 2-3 things this hiring team cares about most (from the JD)?
+2. Which 2 of the candidate's achievements best prove they can deliver those things?
+3. What is one specific, non-obvious thing about this company that shows genuine interest?
 
 WRITING RULES:
 - Opening: hook with a specific insight about the company or role — not "I am excited to apply"
-- Paragraph 2: 2 concrete achievements from their experience that directly address the JD's top needs
-- Paragraph 3: Why THIS company specifically — reference something real about the company (tech stack, known product, engineering blog if notable)
-- Closing: confident, brief, with a specific ask
-- Tone: confident engineer, not a supplicant. No filler phrases.
-- Length: exactly 3-4 paragraphs, under 350 words
+- Paragraph 2: 2 concrete achievements that directly prove the JD's top needs, with numbers
+- Paragraph 3: Why THIS company specifically — one real detail (tech stack, product, mission)
+- Closing: confident ask for a conversation, one sentence
+- Tone: senior engineer who knows their worth, not a supplicant
+- Length: exactly 3 paragraphs, under 300 words
 - Do NOT start with "I" as the first word
-- Do NOT use: "passionate", "excited to apply", "dream company", "team player", "results-driven"
+- BANNED words: passionate, excited, dream, team player, results-driven, leverage, synergy
 
-Output ONLY the letter body (no subject line, no date, no address headers).
+Output ONLY the letter body. No subject line, no date, no headers, no preamble.
 """
 
 
@@ -59,8 +65,8 @@ async def generate_cover_letter(job_dict: dict, profile_dict: dict, match_dict: 
     else:
         visa_note = "No sponsorship needed"
 
-    letter_text = await chat(
-        settings.ollama_model_cover,
+    letter_text = await asyncio.to_thread(
+        claude_chat,
         COVER_LETTER_PROMPT.format(
             company=job.company,
             title=job.title,
@@ -72,8 +78,8 @@ async def generate_cover_letter(job_dict: dict, profile_dict: dict, match_dict: 
             matched_skills=", ".join(match.matched_skills[:8]),
             visa_note=visa_note,
         ),
+        model=settings.claude_model,
         max_tokens=1000,
-        think=False,  # qwen3: direct prose, no CoT overhead
     )
 
     safe_company = re.sub(r"[^\w-]", "-", job.company)

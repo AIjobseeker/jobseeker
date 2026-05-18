@@ -9,6 +9,7 @@ class Settings(BaseSettings):
 
     # AI — Claude (Anthropic)
     anthropic_api_key: str = ""
+    claude_model: str = "claude-sonnet-4-6"
 
     # AI — Ollama (local LLMs, per-task model assignment)
     ollama_host: str = "http://100.115.111.9:11434"

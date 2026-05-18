@@ -1,6 +1,7 @@
-"""DeepSeek-R1 resume tailor — reasoning model for strict rule-following rewrites."""
+"""Claude Sonnet resume tailor — superior reasoning for strategic resume rewrites."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import re
 from pathlib import Path
@@ -9,8 +10,8 @@ from docx import Document
 from temporalio import activity
 
 from shared.config import settings
+from shared.llm_client import claude_chat
 from shared.models import JobPost, MatchResult, UserProfile
-from shared.ollama_client import chat
 
 log = logging.getLogger("worker.resume")
 
@@ -19,6 +20,10 @@ RESUME_DIR = Path("/app/profiles")
 TAILOR_PROMPT = """\
 You are a world-class resume writer specialising in technical roles.
 Rewrite the candidate's resume to precisely match this job description.
+Your goal is to maximise interview callback rate by strategically framing
+the candidate's real experience in the exact language, priorities, and keywords
+the hiring team is looking for. Surface the most relevant work prominently.
+Do NOT invent experience — reframe and emphasise what is already there.
 
 JOB:
 Company: {company}
@@ -36,6 +41,8 @@ RULES — follow every one:
 action verbs, and keywords
 - Open the summary with the job title or closest equivalent, then immediately lead \
 with the most relevant skills in the JD's vocabulary
+- For each bullet: identify the JD's top 3 requirements, then make sure at least one \
+bullet per role directly addresses each requirement using the JD's own phrasing
 - Reorder bullets ONLY within the same [ROLE] section — never move content across roles
 - Leave [HEADER], [ROLE], and [EMPTY] lines structurally unchanged (light wording ok for [ROLE])
 - Never invent facts — every claim must be traceable to the original
@@ -149,17 +156,18 @@ async def tailor_resume(job_dict: dict, profile_dict: dict, match_dict: dict) ->
 
     structured = _read_docx_structured(docx_path)
 
-    rewritten = await chat(
-        settings.ollama_model_resume,
-        TAILOR_PROMPT.format(
-            company=job.company,
-            title=job.title,
-            description=job.description_text[:4000],
-            skills=", ".join(profile.skills),
-            resume_content=structured,
-        ),
+    prompt = TAILOR_PROMPT.format(
+        company=job.company,
+        title=job.title,
+        description=job.description_text[:4000],
+        skills=", ".join(profile.skills),
+        resume_content=structured,
+    )
+    rewritten = await asyncio.to_thread(
+        claude_chat,
+        prompt,
+        model=settings.claude_model,
         max_tokens=4000,
-        think=True,  # qwen3: reason through the 8 formatting rules before writing
     )
 
     # Build output path
