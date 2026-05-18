@@ -112,6 +112,7 @@ class MatchAndProcessWorkflow:
         resume_path = tailor_result.get("resume_path", "")
         defense_path = tailor_result.get("defense_path", "")
         prep_path = tailor_result.get("prep_path", "")
+        prep_summary = tailor_result.get("prep_summary", "")
 
         # Step 3: Cover letter
         cover_path: str = await workflow.execute_activity(
@@ -177,6 +178,7 @@ class MatchAndProcessWorkflow:
             "cover_letter_url": cover_url,
             "defense_minio_path": defense_minio if defense_url else "",
             "prep_minio_path": prep_minio if prep_url else "",
+            "prep_summary": prep_summary,
         }
 
         # Step 5: Notify (non-fatal if fails)

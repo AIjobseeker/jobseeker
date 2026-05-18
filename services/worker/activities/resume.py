@@ -364,8 +364,6 @@ async def tailor_resume(job_dict: dict, profile_dict: dict, match_dict: dict) ->
         plan.get("archetype"), jdi.get("company_type"),
         plan.get("interview_callback_estimate"),
     )
-
-    # Output directory per person+job
     safe_company = re.sub(r"[^\w-]", "-", job.company)
     safe_title = re.sub(r"[^\w-]", "-", job.title)
     out_dir = Path("/tmp") / f"{profile.id}_{safe_company}_{safe_title}"
@@ -386,8 +384,26 @@ async def tailor_resume(job_dict: dict, profile_dict: dict, match_dict: dict) ->
     prep_path = write_prep_md(out_dir, plan, job_dict)
     log.info("Prep guide → %s", prep_path)
 
+    # Build prep summary for the Telegram message code block
+    prep_lines: list[str] = []
+    if jdi.get("priority_frame"):
+        prep_lines.append(f"What they want: {jdi['priority_frame']}")
+    req = jdi.get("required_skills") or []
+    if req:
+        prep_lines.append("Must-know: " + ", ".join(req[:6]))
+    pref = jdi.get("preferred_skills") or []
+    if pref:
+        prep_lines.append("Brush-up: " + ", ".join(pref[:6]))
+    cb = plan.get("interview_callback_estimate")
+    score_parts: list[str] = []
+    if cb is not None:
+        score_parts.append(f"callback est. {cb}/100")
+    if score_parts:
+        prep_lines.append("Scores: " + " · ".join(score_parts))
+
     return {
         "resume_path": str(docx_path),
         "defense_path": str(defense_path),
         "prep_path": str(prep_path),
+        "prep_summary": "\n".join(prep_lines),
     }
