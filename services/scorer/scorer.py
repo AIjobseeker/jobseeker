@@ -384,6 +384,7 @@ class ProfileScorer:
         self.seniority_level: str = (
             (self.profile.get("seniority") or {}).get("level", "") or ""
         ).lower()
+        self.skip_sre_niche_scoring: bool = bool(self.profile.get("skip_sre_niche_scoring", False))
 
         self._model = None  # lazy-loaded sentence-transformers model
         self.profile_embedding: np.ndarray = self._load_or_build_profile_embedding()
@@ -465,9 +466,18 @@ class ProfileScorer:
 
         for flag in self.red_flags:
             if flag and flag in title_lower:
-                adjustments["red_flag_penalty"] = -0.15
+                adjustments["red_flag_penalty"] = -0.25
                 notes.append(f"red flag '{flag}' in title")
                 break
+
+        # Also check description for experience-year red flags — "5+ years required"
+        # in the JD body should penalise even if the title looks entry-level.
+        if "red_flag_penalty" not in adjustments:
+            for flag in self.red_flags:
+                if flag and flag in desc_lower:
+                    adjustments["red_flag_desc_penalty"] = -0.20
+                    notes.append(f"red flag '{flag}' in description")
+                    break
 
         no_sponsorship = False
         for phrase in NO_SPONSORSHIP_PHRASES:
@@ -499,50 +509,40 @@ class ProfileScorer:
                 notes.append(f"ambiguous '{ambig_hit}' with no tech context")
 
         # ── SRE/DevOps/Cloud niche density ─────────────────────────────────
-        # Goal: separate genuine operational SRE/Platform roles from software
-        # engineering roles that happen to mention kubernetes once. Two-axis
-        # scoring: SRE vocabulary density vs coding-heavy vocabulary density.
-        sre_in_title = _has_token(title_lower, NICHE_TITLE_TOKENS)
-        sre_count = _count_tokens(desc_lower, SRE_NICHE_TOKENS)
-        # Count coding-heavy signals in BOTH title and description — a title
-        # like "ML Research Engineer" is itself a strong signal.
-        coding_count = (
-            _count_tokens(title_lower, CODING_HEAVY_TOKENS)
-            + _count_tokens(desc_lower, CODING_HEAVY_TOKENS)
-        )
-
-        # Strong title hit: small confirmation bonus.
-        if sre_in_title:
-            adjustments["niche_title_match"] = 0.05
-            notes.append(f"niche title token '{sre_in_title}'")
-
-        # Density bonus: every 2 SRE tokens add 0.02, capped at 0.10. This
-        # is what separates "Cloud Data Engineer using Spark" (1-2 SRE tokens)
-        # from "Staff SRE running k8s platform" (5-10 SRE tokens).
-        if sre_count >= 2:
-            density_bonus = round(min(0.10, 0.02 * (sre_count // 2)), 4)
-            adjustments["sre_density_bonus"] = density_bonus
-            notes.append(f"{sre_count} SRE-niche signals in JD")
-
-        # Coding-heavy penalty: scaled to how dominant coding signals are.
-        if coding_count >= 2 and coding_count > sre_count:
-            penalty = round(min(0.25, 0.05 * coding_count), 4)
-            adjustments["coding_heavy_penalty"] = -penalty
-            notes.append(
-                f"coding-heavy role: {coding_count} coding vs {sre_count} SRE signals"
+        # Skipped for profiles that set skip_sre_niche_scoring: true (e.g. ML/AI profiles)
+        # because the coding-heavy and generic-SWE penalties would hurt exactly
+        # the roles those profiles are targeting.
+        if not self.skip_sre_niche_scoring:
+            sre_in_title = _has_token(title_lower, NICHE_TITLE_TOKENS)
+            sre_count = _count_tokens(desc_lower, SRE_NICHE_TOKENS)
+            coding_count = (
+                _count_tokens(title_lower, CODING_HEAVY_TOKENS)
+                + _count_tokens(desc_lower, CODING_HEAVY_TOKENS)
             )
 
-        # Generic-SWE-with-no-niche-evidence: title has "software engineer"
-        # without any SRE qualifier AND description has zero SRE niche tokens.
-        # Likely a product/feature SWE role — penalize moderately so it can
-        # only pass if embedding score is high (cross-validation).
-        if (
-            "software engineer" in title_lower
-            and not sre_in_title
-            and sre_count == 0
-        ):
-            adjustments["generic_swe_no_niche"] = -0.15
-            notes.append("generic SWE title, no SRE-niche evidence")
+            if sre_in_title:
+                adjustments["niche_title_match"] = 0.05
+                notes.append(f"niche title token '{sre_in_title}'")
+
+            if sre_count >= 2:
+                density_bonus = round(min(0.10, 0.02 * (sre_count // 2)), 4)
+                adjustments["sre_density_bonus"] = density_bonus
+                notes.append(f"{sre_count} SRE-niche signals in JD")
+
+            if coding_count >= 2 and coding_count > sre_count:
+                penalty = round(min(0.25, 0.05 * coding_count), 4)
+                adjustments["coding_heavy_penalty"] = -penalty
+                notes.append(
+                    f"coding-heavy role: {coding_count} coding vs {sre_count} SRE signals"
+                )
+
+            if (
+                "software engineer" in title_lower
+                and not sre_in_title
+                and sre_count == 0
+            ):
+                adjustments["generic_swe_no_niche"] = -0.15
+                notes.append("generic SWE title, no SRE-niche evidence")
 
         # ── Location preference ────────────────────────────────────────────
         # Goal (per profile.locations): US is target, India is acceptable but
