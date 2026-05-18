@@ -37,10 +37,12 @@ async def main():
     client = await Client.connect(settings.temporal_host)
 
     print("Triggering MatchAndProcessWorkflow for Stripe Staff SRE ...")
+    import time
+    run_id = f"test-match-{int(time.time())}"
     handle = await client.start_workflow(
         "MatchAndProcessWorkflow",
         args=[TEST_JOB],
-        id="test-match-workflow-001",
+        id=run_id,
         task_queue=settings.temporal_task_queue,
     )
     print(f"Workflow started: {handle.id}")
