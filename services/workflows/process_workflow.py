@@ -3,13 +3,12 @@ MatchAndProcessWorkflow — full pipeline for a single new job:
 
   1. Load both user profiles (Sai + GF)
   2. For each profile:
-     a. Match job against profile (Claude Haiku)
+     a. Match job against profile (Claude)
      b. If score >= threshold:
-        - Tailor resume (Claude Sonnet)
-        - Generate cover letter (Claude Sonnet)
-        - Generate study guide (Claude Haiku)
-        - Upload docs to MinIO
-        - Send Telegram notification
+        - Tailor resume via resume.yaml (Claude REWRITE_PROMPT → DOCX + defense.md + prep.md)
+        - Generate cover letter (Claude)
+        - Upload all docs to MinIO
+        - Send rich Telegram notification (4 buttons + files as reply_to)
         - Track in PostgreSQL
 """
 from __future__ import annotations
@@ -25,7 +24,6 @@ with workflow.unsafe.imports_passed_through():
         match_job,
         tailor_resume,
         generate_cover_letter,
-        generate_study_guide,
         upload_document,
         notify_telegram,
         track_application,
@@ -84,7 +82,7 @@ class MatchAndProcessWorkflow:
         match_dict: dict = await workflow.execute_activity(
             match_job,
             args=[job_dict, profile_dict],
-            schedule_to_close_timeout=timedelta(seconds=30),
+            schedule_to_close_timeout=timedelta(seconds=60),
             retry_policy=_RETRY_AI,
         )
 
@@ -104,13 +102,16 @@ class MatchAndProcessWorkflow:
             person_id, job_dict.get("title"), job_dict.get("company"), score,
         )
 
-        # Step 2: Tailor resume
-        resume_path: str = await workflow.execute_activity(
+        # Step 2: Tailor resume (returns dict with resume_path, defense_path, prep_path)
+        tailor_result: dict = await workflow.execute_activity(
             tailor_resume,
             args=[job_dict, profile_dict, match_dict],
-            schedule_to_close_timeout=timedelta(minutes=3),
+            schedule_to_close_timeout=timedelta(minutes=5),
             retry_policy=_RETRY_AI,
         )
+        resume_path = tailor_result.get("resume_path", "")
+        defense_path = tailor_result.get("defense_path", "")
+        prep_path = tailor_result.get("prep_path", "")
 
         # Step 3: Cover letter
         cover_path: str = await workflow.execute_activity(
@@ -120,52 +121,76 @@ class MatchAndProcessWorkflow:
             retry_policy=_RETRY_AI,
         )
 
-        # Step 4: Study guide
-        study_guide: str = await workflow.execute_activity(
-            generate_study_guide,
-            args=[job_dict, profile_dict, match_dict],
-            schedule_to_close_timeout=timedelta(minutes=1),
-            retry_policy=_RETRY_AI,
-        )
-
-        # Step 5: Upload to MinIO
+        # Step 4: Upload all docs to MinIO
         job_company = job_dict.get("company", "company").replace(" ", "-")
         job_title = job_dict.get("title", "role").replace(" ", "-")
         job_id = job_dict.get("id", "id")
 
+        resume_minio = f"{person_id}/{job_id}/{job_company}_{job_title}_resume.docx"
+        cover_minio = f"{person_id}/{job_id}/{job_company}_{job_title}_cover.txt"
+        defense_minio = f"{person_id}/{job_id}/{job_company}_{job_title}_defense.md"
+        prep_minio = f"{person_id}/{job_id}/{job_company}_{job_title}_prep.md"
+
         resume_url: str = await workflow.execute_activity(
             upload_document,
-            args=[resume_path, f"{person_id}/{job_id}/{job_company}_{job_title}_resume.docx"],
+            args=[resume_path, resume_minio],
             schedule_to_close_timeout=timedelta(minutes=2),
             retry_policy=_RETRY_FAST,
         )
         cover_url: str = await workflow.execute_activity(
             upload_document,
-            args=[cover_path, f"{person_id}/{job_id}/{job_company}_{job_title}_cover.txt"],
+            args=[cover_path, cover_minio],
             schedule_to_close_timeout=timedelta(minutes=2),
             retry_policy=_RETRY_FAST,
         )
 
+        # Upload defense notes (non-fatal if missing)
+        defense_url = ""
+        if defense_path:
+            try:
+                defense_url = await workflow.execute_activity(
+                    upload_document,
+                    args=[defense_path, defense_minio],
+                    schedule_to_close_timeout=timedelta(minutes=1),
+                    retry_policy=_RETRY_FAST,
+                )
+            except Exception as e:
+                workflow.logger.warning("Defense upload failed (non-fatal): %s", e)
+
+        # Upload prep guide (non-fatal if missing)
+        prep_url = ""
+        if prep_path:
+            try:
+                prep_url = await workflow.execute_activity(
+                    upload_document,
+                    args=[prep_path, prep_minio],
+                    schedule_to_close_timeout=timedelta(minutes=1),
+                    retry_policy=_RETRY_FAST,
+                )
+            except Exception as e:
+                workflow.logger.warning("Prep upload failed (non-fatal): %s", e)
+
         docs_dict = {
-            "resume_minio_path": f"{person_id}/{job_id}/{job_company}_{job_title}_resume.docx",
+            "resume_minio_path": resume_minio,
             "resume_url": resume_url,
-            "cover_letter_minio_path": f"{person_id}/{job_id}/{job_company}_{job_title}_cover.txt",
+            "cover_letter_minio_path": cover_minio,
             "cover_letter_url": cover_url,
-            "study_guide": study_guide,
+            "defense_minio_path": defense_minio if defense_url else "",
+            "prep_minio_path": prep_minio if prep_url else "",
         }
 
-        # Step 6: Notify (non-fatal if fails)
+        # Step 5: Notify (non-fatal if fails)
         try:
             await workflow.execute_activity(
                 notify_telegram,
                 args=[job_dict, profile_dict, match_dict, docs_dict],
-                schedule_to_close_timeout=timedelta(seconds=15),
+                schedule_to_close_timeout=timedelta(seconds=60),
                 retry_policy=_RETRY_FAST,
             )
         except Exception as e:
             workflow.logger.warning("Telegram notify failed (non-fatal): %s", e)
 
-        # Step 7: Track in DB (non-fatal if fails)
+        # Step 6: Track in DB (non-fatal if fails)
         try:
             await workflow.execute_activity(
                 track_application,
@@ -176,7 +201,7 @@ class MatchAndProcessWorkflow:
         except Exception as e:
             workflow.logger.warning("DB track failed (non-fatal): %s", e)
 
-        # Step 8: Sync to Google Sheet (non-fatal if fails)
+        # Step 7: Sync to Google Sheet (non-fatal if fails)
         try:
             await workflow.execute_activity(
                 sync_to_sheet,

@@ -149,7 +149,9 @@ class GeneratedDocuments(BaseModel):
     resume_url: str                  # presigned URL (48h)
     cover_letter_minio_path: str
     cover_letter_url: str
-    study_guide: str                 # plain text / markdown
+    study_guide: str = ""            # plain text / markdown (legacy; prep.md replaces)
+    defense_minio_path: str = ""     # interview_defense.md in MinIO
+    prep_minio_path: str = ""        # interview_prep.md in MinIO
 
 
 # ──────────────────────────────────────────────
