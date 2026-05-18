@@ -273,15 +273,7 @@ services:
       # Override OLLAMA_HOST in .env if Ollama is elsewhere.
     volumes:
       - ./profiles:/app/profiles
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
-      temporal:
-        condition: service_started
+      - ./companies:/app/companies:ro
     restart: unless-stopped
 
   # Legacy services kept for reference (not started by default).
