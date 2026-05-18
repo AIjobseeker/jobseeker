@@ -124,6 +124,31 @@ def _apply_rewrites_to_docx(original_path: Path, output_path: Path, rewritten: s
     doc.save(str(output_path))
 
 
+def _download_from_minio(minio_path: str, person_id: str, variant_id: str) -> Path:
+    """Download a resume template from MinIO to /tmp. Raises if not found."""
+    from minio import Minio
+    from minio.error import S3Error
+
+    client = Minio(
+        settings.minio_endpoint,
+        access_key=settings.minio_access_key,
+        secret_key=settings.minio_secret_key,
+        secure=settings.minio_secure,
+    )
+    dest = Path("/tmp") / "resumes" / person_id / f"{variant_id}.docx"
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        client.fget_object(settings.minio_bucket, minio_path, str(dest))
+        log.info("Downloaded resume from MinIO: %s → %s", minio_path, dest)
+        return dest
+    except S3Error as e:
+        raise FileNotFoundError(
+            f"Resume template not in MinIO at '{minio_path}'. "
+            f"Run: python scripts/upload_resumes.py from the Mac to seed MinIO. "
+            f"Original error: {e}"
+        ) from e
+
+
 @activity.defn
 async def tailor_resume(job_dict: dict, profile_dict: dict, match_dict: dict) -> str:
     """
@@ -134,25 +159,29 @@ async def tailor_resume(job_dict: dict, profile_dict: dict, match_dict: dict) ->
     profile = UserProfile(**profile_dict)
     match = MatchResult(**match_dict)
 
-    # Find the right resume variant
-    variant_id = match.recommended_variant or (
-        profile.resume_variants[0].id if profile.resume_variants else "base"
-    )
+    # Find the right resume variant.
+    # match.recommended_variant may be a bare key like "infra" or "aiml"; try an exact
+    # match first, then a suffix match (e.g. "infra" matches "sai_infra").
+    raw_hint = match.recommended_variant or ""
     variant = next(
-        (v for v in profile.resume_variants if v.id == variant_id),
+        (v for v in profile.resume_variants if v.id == raw_hint), None
+    ) or next(
+        (v for v in profile.resume_variants if v.id.endswith(f"_{raw_hint}") or v.id == raw_hint),
         profile.resume_variants[0] if profile.resume_variants else None,
     )
 
     if not variant:
         raise RuntimeError(f"No resume variant found for {profile.id}")
 
+    variant_id = variant.id  # always use the canonical ID from the profile
+
     # Resume is stored locally at /app/profiles/{person_id}/resumes/{variant_id}.docx
     docx_path = RESUME_DIR / profile.id / "resumes" / f"{variant_id}.docx"
     if not docx_path.exists():
-        raise FileNotFoundError(
-            f"Resume not found at {docx_path}. "
-            f"Run: make upload-resume PERSON={profile.id} VARIANT={variant_id}"
-        )
+        # Fall back: try downloading the base template from MinIO
+        minio_path = variant.minio_path
+        log.info("Local resume not found — downloading from MinIO: %s", minio_path)
+        docx_path = _download_from_minio(minio_path, profile.id, variant_id)
 
     structured = _read_docx_structured(docx_path)
 
