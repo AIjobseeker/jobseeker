@@ -160,13 +160,20 @@ async def main() -> None:
         store=store,
         min_score=env_min_score(),
     ) as dispatcher:
+        # IMPORTANT: subscribe the DISPATCHER first, then the republisher.
+        # Order matters because NATS Core is fire-and-forget — if the
+        # republisher publishes to jobs.new.{person} before any subscriber
+        # exists on that subject, those messages are dropped silently and
+        # the same jobs come back as dedup hits forever (notified=0
+        # permanently in seen.db). This is what caused the original
+        # "85 jobs ≥ 0.65 but telegram_sent=0" bug on first deployment.
         repub = DedupRepublisher(nc, store, out_subject=new_subject)
-        await repub.run(subject=scored_subject, queue=f"notifier-dedup-{person}")
         await run_dispatcher_loop(
             nc, dispatcher, sheet_syncer=sheet_syncer,
             subject=new_subject, queue=f"notifier-{person}",
             person=sheet_person,
         )
+        await repub.run(subject=scored_subject, queue=f"notifier-dedup-{person}")
 
         # Bot listener — handles inline-button callbacks and updates status
         # in seen.db + Google Sheet. Runs in its own task; never blocks the
